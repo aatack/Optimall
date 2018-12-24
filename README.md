@@ -16,7 +16,7 @@ Data that make up part of a computation graph are wrapped up in a `Node`.  While
 data Node a = Node NodeType [Int] (Maybe a)
 ```
 
-The first parameter is the type of the node, which is defined as
+The first parameter is the type of the node, which is defined as:
 
 ```
 data NodeType = Input | Output | Parameter Int | Custom String
@@ -34,18 +34,18 @@ A hierarchy can be thought of as a bit like a JSON object that contains some met
 
 ```
 import qualified Data.Map as Map
-data Hierarchy a b c = Unit a
-                     | Keyed b (Map.Map String (Hierarchy a b c))
-                     | Ordered c [Hierarchy a b c]
+data Hierarchy a b = Unit b a
+                   | Keyed b (Map.Map String (Hierarchy a b))
+                   | Ordered b [Hierarchy a b]
 ```
 
-The types `b` and `c` are the metadata stored when the hierarchy branches into unordered key-value pairs or an ordered list respectively, while the type `a` is the data type stored at the leaves.  A `Hierarchy` is rarely used on its own, and most of the interactions are done via a specific instance of it, known as a `Graph`:
+The type argument `b` is the metadata stored when the hierarchy branches into unordered key-value pairs or an ordered list respectively, while the type `a` is the data type stored at the leaves.  A `Hierarchy` is rarely used on its own, and most of the interactions are done via a specific instance of it, specifically a `Graph`:
 
 ```
-type Graph a = Hierarchy (Node a) (Template a) (Template a)
+type Graph a = Hierarchy (Node a) (Template a)
 ```
 
-Templates will be defined in the next section, but the important part is that a graph consists of a JSON-like object with `Node`s at its leaves, but at each level there is also a `Template`.
+Templates will be defined in the next section, but the important part is that a graph consists of a JSON-like object with `Node`s at its leaves, with a `Template` at each level.
 
 A graph representing a single layer of a MLP might look something like this (in psuedocode):
 
@@ -62,15 +62,15 @@ mlpLayer -> { "input"   -> Node Input [5] Nothing
 So we have a way of representing the data in a graph, and a way of representing the structure of the graph.  A template's job is to describe how all this information is put together to calculate the values of the graph outputs given its inputs, and how to calculate the derivatives of the graph's nodes with respect to each other.  It also contains some utility functions for checking that it can operate on a particular instance of a `Graph`.
 
 ```
-data Template a = Template { schema :: Hierarchy String String String
-                           , templateCheck :: (TemplateCheck a)
-                           , shapeCheck :: ShapeCheck
-                           , apply :: (Graph a -> Graph a)
-                           , derivatives :: (String -> Template a)
+data Template a = Template { schema :: Hierarchy NodeType String
+                           , templateCheck :: TemplateCheck a
+                           , shapeCheck :: ShapeCheck a
+                           , apply :: Graph a -> Graph a
+                           , derivatives :: String -> Template a
                            }
 
-type TemplateCheck a = Hierarchy () (Template a) (Template a) -> [String]
-type ShapeCheck = Hierarchy Shape () () -> [String]
+type TemplateCheck a = Hierarchy NodeType (Template a) -> [String]
+type ShapeCheck a = Hierarchy [Int] (Template a) -> [String]
 ```
 
 The first part is the schema, which describes in a user-friendly way which nodes and subgraphs should be contained in a graph that can be operated on by the template.  A function, `templateCheck`, is provided, which checks that the graph is of the right type (`Unit`, `Keyed` or `Ordered`), contains the right keys if necessary, and checks that any nodes or subgraphs contained in it also conform to the expected template types.  The template check returns a list of any errors it encountered; if there are no errors, it should be safe to run the shape check.
@@ -85,6 +85,6 @@ The subgraph contained in the `"values"` key should have the same form as the or
 
 In practice, this will almost always mean calculating the derivatives of each node with respect to the pivot node, and multiplying the external derivatives by this new tensor.  The derivatives function is only defined in this way so that, in special cases that would otherwise require the multiplication of two sparse tensors, the internal derivatives can be provided directly as a function of the external derivatives.
 
-One problem with this is that defining a new template type could become very arduous, since each template will need to define another kind of template for each of the nodes it contains, each of while will need to define another template for each of its nodes, and so on.  This will be overcome by leveraging Haskell's ability to lazily compute values, and then defining a small number of very simple templates explicitly (which won't be too hard since their derivatives will quickly become zero).  More complicated templates can then be defined in terms of existing templates and links between their nodes, at which point functions can do the heavy lifting needed to recursively define their `apply` and `derivatives` functions.
+One problem with this is that defining a new template type could become very arduous, since each template will need to define another kind of template for each of the nodes it contains, each of which will need to define another template for each of its nodes, and so on.  This will be overcome by leveraging Haskell's ability to lazily compute values, and then defining a small number of very simple templates explicitly (which won't be too hard since their derivatives will quickly become zero).  More complicated templates can then be defined in terms of existing templates and links between their nodes, at which point functions can do the heavy lifting needed to recursively define their `apply` and `derivatives` functions.
 
-While this may seem like a very long way of doing things, once a few basic templates and the functions for creating `apply` and `derivatives` instances have been implemented, creating new arbitrarily complex templates should be very simple for the end user.  Another nice property of doing it this way is that, since the derivatives of the nodes of a template will themselves have a template, we can calculate the *n*th derivative of things without any extra work on the user's end.  This should afford the user more flexibility when it comes to working with Optimall - for example, 2nd derivatives can be used for optimising, or the output derivatives can be used as a regularisation variable, and so on.
+While this may seem like a very long way of doing things, once a few basic templates and the functions for creating `apply` and `derivatives` instances have been implemented, creating new arbitrarily complex templates should be very simple for the end user.  Another nice property of doing it this way is that, since the derivatives of the nodes of a template will themselves have a template, we can calculate the *n*th derivative of things without any extra work on the user's end.  This should afford the user more flexibility when it comes to working with Optimall - for example, 2nd derivatives can be used in optimisers, or the output derivatives can be used as a regularisation variable, and so on.

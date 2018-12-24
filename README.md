@@ -27,3 +27,22 @@ Any node can have any type, and the type should be ignored when checking the val
 A node also contains the shape of its data in the form of a `[Int]`.  It should be noted that this does not allow for nodes to be created that accept tensors of an arbitrary size: the intended way of accomplishing this is to define a function that wraps a tensor in a customised node (more on this later).
 
 The last argument is a `Maybe a` that actually stores the value of the node.  If the value is `Nothing` then this just means that the value has either not been provided yet - as may be the case for inputs - has not been calculated yet or that an error occurred during its computation, or is otherwise undefined.
+
+### Hierarchy & Graph
+
+A hierarchy can be thought of as a bit like a JSON object that contains some metadata for the whole object.
+
+```
+import qualified Data.Map as Map
+data Hierarchy a b c = Unit a
+                     | Map b (Map.Map String (Hierarchy a b c))
+                     | List c [Hierarchy a b c]
+```
+
+The types `b` and `c` are the metadata stored when the hierarchy branches into unordered key-value pairs or an ordered list respectively, while the type `a` is the data type stored at the leaves.  A `Hierarchy` is rarely used on its own, and most of the interactions are done via a specific instance of it, known as a `Graph`:
+
+```
+type Graph a = Hierarchy (Node a) (Template a) (Template a)
+```
+
+Templates will be defined in the next section, but the important part is that a graph consists of a JSON-like object with `Node`s at its leaves, but at each level there is also a `Template`.

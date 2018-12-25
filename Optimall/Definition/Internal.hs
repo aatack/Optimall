@@ -1,6 +1,6 @@
-module Optimall.Definition.Types
+module Optimall.Definition.Internal
 ( Graph
-, Template (..)
+, Template
 , TemplateCheck
 , ShapeCheck
 ) where

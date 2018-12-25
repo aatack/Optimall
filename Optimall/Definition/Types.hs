@@ -1,22 +1,12 @@
 module Optimall.Definition.Types
-( Node
-, NodeType (..)
-, Graph
+( Graph
 , Template (..)
 , TemplateCheck
 , ShapeCheck
 ) where
 
 import Optimall.Definition.Hierarchy
-
--- | Defines a Node, containing a value as well as some
--- information about the value.
-data Node a = Node NodeType [Int] (Maybe a)
-
--- | Describes the type of a node; used mainly for the benefit
--- of the user, and for filtering graphs to find all nodes
--- of a particular type.
-data NodeType = Input | Output | Parameter Int | Custom String
+import Optimall.Definition.Node
 
 -- | Structures nodes and pairs them with a template
 -- that describes how their values should be used.

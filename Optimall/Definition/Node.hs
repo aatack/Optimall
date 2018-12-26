@@ -1,5 +1,5 @@
 module Optimall.Definition.Node
-( Node
+( Node (..)
 , NodeType (..)
 , (<<)
 ) where

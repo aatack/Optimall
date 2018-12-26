@@ -1,5 +1,6 @@
 module Optimall.Definition.Hierarchy
 ( Hierarchy (..)
+, hmap
 , unitHierarchy
 , keyedHierarchy
 , orderedHierarchy
@@ -15,6 +16,12 @@ data Hierarchy a b = Unit a b
                    | Keyed (Map.Map String (Hierarchy a b)) b
                    | Ordered [Hierarchy a b] b
 
+-- | Map the data and metadata of an hierarchy.
+hmap :: (a -> c) -> (b -> d) -> Hierarchy a b -> Hierarchy c d
+hmap f fd (Unit u d) = Unit (f u) (fd d)
+hmap f fd (Keyed m d) = Keyed (Map.map (hmap f fd) m) (fd d)
+hmap f fd (Ordered l d) = Ordered (map (hmap f fd) l) (fd d)
+
 -- | Index an element from the next level of the hierarchy.
 (//) :: Hierarchy a b -> String -> Hierarchy a b
 (//) (Keyed m _) k = m Map.! k
@@ -22,7 +29,7 @@ data Hierarchy a b = Unit a b
 (//) (Unit _ _) _ = error "Cannot index a unit hierarchy."
 
 -- | Recursively index elements from the levels of
--- a hierarchy.
+-- an hierarchy.
 (//!) :: Hierarchy a b -> [String] -> Hierarchy a b
 (//!) h [] = h
 (//!) h (i:is) = (h // i) //! is

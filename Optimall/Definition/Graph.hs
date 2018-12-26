@@ -3,8 +3,11 @@ module Optimall.Definition.Graph
 , layout
 , templateLayout
 , shapeLayout
+, copyGraph
+, (>->)
 ) where
 
+import qualified Data.Map as Map
 import Optimall.Definition.Hierarchy
 import Optimall.Definition.Node
 import Optimall.Definition.Template
@@ -38,3 +41,25 @@ applyGraph g = apply (metadata g) g
 applySubgraph :: [String] -> Graph a -> Graph a
 applySubgraph [] g = applyGraph g
 applySubgraph (p:ps) g = applySubgraph ps (g // p)
+
+-- | Copy the node values from one graph to another, but
+-- keep the structure and node values the same.  If all the
+-- nodes in the target are not present in the source, an
+-- error will be thrown.
+copyGraph :: Graph a -> Graph a -> Graph a
+copyGraph (Unit source _) (Unit target t) =
+    Unit (copyNode source target) t
+copyGraph (Keyed source _) (Keyed target t) =
+    let f key target' = copyGraph (source Map.! key) target'
+    in Keyed (Map.mapWithKey f target) t
+copyGraph (Ordered source _) (Ordered target t) =
+    let copyGraph' (source', target') = copyGraph source' target'
+    in Ordered (map (copyGraph') (zip source target)) t
+copyGraph _ _ = error "Cannot copy between graphs of different types."
+
+-- | Copy the node values from one graph to another, but
+-- keep the structure and node values the same.  If all the
+-- nodes in the target are not present in the source, an
+-- error will be thrown.
+(>->) :: Graph a -> Graph a -> Graph a
+(>->) = copyGraph

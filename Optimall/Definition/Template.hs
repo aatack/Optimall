@@ -32,3 +32,8 @@ type TemplateCheck a = Hierarchy () (Template a) -> [String]
 -- | Returns any errors found with the shapes of tensors
 -- in a graph.
 type ShapeCheck a = Hierarchy [Int] (Template a) -> [String]
+
+-- | Template equality is compared according to
+-- their names.
+instance Eq (Template a) where
+    (==) a b = name a == name b

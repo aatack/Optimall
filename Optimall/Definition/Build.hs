@@ -3,6 +3,7 @@ module Optimall.Definition.Build
 ) where
 
 import qualified Data.Map as Map
+import Optimall.Definition.Hierarchy
 import Optimall.Definition.Template
 import Optimall.Definition.Link
 
@@ -31,11 +32,25 @@ buildName :: LinkedTemplate a -> String
 buildName (LinkedTemplate n _ _) = n
 
 -- | Build a schema from a linked template.
-buildSchema = error "NYI."
+buildSchema :: LinkedTemplate a -> Schema
+buildSchema (LinkedTemplate n m _) = Keyed (Map.map (schema) (m)) n
 
 -- | Build an auto-generated template check from
 -- a linked template.
-buildTemplateCheck = error "NYI."
+buildTemplateCheck :: LinkedTemplate a -> TemplateCheck a
+buildTemplateCheck (LinkedTemplate _ m _) (Keyed m' _) =
+    Map.foldr (++) [] errors
+    where
+        errors = Map.mapWithKey (checkSubgraph) m
+        checkSubgraph key template
+            | Map.member key m' =
+                if metadata (m' Map.! key) == template
+                then (templateCheck template) (m' Map.! key)
+                else ["the subgraph " ++ key ++
+                    " must have the type " ++ name template]
+            | otherwise =
+                ["the graph must have a subgraph named " ++ key]
+buildTemplateCheck _ _ = error "The input must be a keyed graph."
 
 -- | Build an auto-generated shape check from
 -- a linked template.
@@ -46,4 +61,3 @@ buildApply = error "NYI."
 
 -- | Build a derivatives template for a linked template.
 buildDerivatives = error "NYI."
-

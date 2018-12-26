@@ -5,7 +5,8 @@ module Optimall.Definition.Hierarchy
 , keyedHierarchy
 , orderedHierarchy
 , (//)
-, (//!)
+, (/../)
+, metadata
 ) where
 
 import qualified Data.Map as Map
@@ -30,18 +31,24 @@ hmap f fd (Ordered l d) = Ordered (map (hmap f fd) l) (fd d)
 
 -- | Recursively index elements from the levels of
 -- an hierarchy.
-(//!) :: Hierarchy a b -> [String] -> Hierarchy a b
-(//!) h [] = h
-(//!) h (i:is) = (h // i) //! is
+(/../) :: Hierarchy a b -> [String] -> Hierarchy a b
+(/../) h [] = h
+(/../) h (i:is) = (h // i) /../ is
 
 -- | Create a unit hierarcy from a tuple.
 unitHierarchy :: (a, b) -> Hierarchy a b
-unitHierarchy (unit, metadata) = Unit unit metadata
+unitHierarchy (unit, md) = Unit unit md
 
 -- | Create a keyed hierarchy from a list of key-value pairs.
 keyedHierarchy :: [(String, Hierarchy a b)] -> b -> Hierarchy a b
-keyedHierarchy kvps metadata = Keyed (Map.fromList kvps) metadata
+keyedHierarchy kvps md = Keyed (Map.fromList kvps) md
 
 -- | Create an ordered hierarchy from a list of hierarchies.
 orderedHierarchy :: [Hierarchy a b] -> b -> Hierarchy a b
-orderedHierarchy ls metadata = Ordered ls metadata
+orderedHierarchy ls md = Ordered ls md
+
+-- | Extract the hierarchy's metadata at the top level.
+metadata :: Hierarchy a b -> b
+metadata (Unit _ md) = md
+metadata (Keyed _ md) = md
+metadata (Ordered _ md) = md

@@ -14,9 +14,7 @@ import Optimall.Definition.Internal
 -- type, names of keys, and the recommended type
 -- of each node.
 layout :: Graph a -> Schema
-layout = 
-    let nullify _ = ()
-    in hmap (nodeType) (nullify)
+layout = hmap (nodeType) (name)
 
 -- | Create a data structure describing the templates which
 -- make up the graph.
@@ -29,3 +27,14 @@ templateLayout =
 -- templates which make up the graph.
 shapeLayout :: Graph a -> Hierarchy [Int] (Template a)
 shapeLayout = hmap (shape) (id)
+
+-- | Apply the values contained within a graph according to
+-- its template.
+applyGraph :: Graph a -> Graph a
+applyGraph g = apply (metadata g) g
+
+-- | Update the graph by applying the template to the
+-- subgraph specified by the path.
+applySubgraph :: [String] -> Graph a -> Graph a
+applySubgraph [] g = applyGraph g
+applySubgraph (p:ps) g = applySubgraph ps (g // p)

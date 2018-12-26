@@ -6,6 +6,7 @@ module Optimall.Definition.Link
 , (//>)
 , resolveSource
 , applyLink
+, reverseLink
 ) where
 
 import Optimall.Definition.Graph
@@ -46,3 +47,7 @@ applyLink' :: Graph a -> [String] -> Graph a -> Graph a
 applyLink' source path = 
     let replace _ = source
     in adjustSubgraph (replace) path
+
+-- | Flip the direction of a link.
+reverseLink :: Link -> Link
+reverseLink (Link a b) = Link b a

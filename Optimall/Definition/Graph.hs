@@ -5,6 +5,10 @@ module Optimall.Definition.Graph
 , shapeLayout
 , copyGraph
 , (>->)
+, (//)
+, (/../)
+, adjustGraph
+, adjustSubgraph
 ) where
 
 import qualified Data.Map as Map
@@ -63,3 +67,15 @@ copyGraph _ _ = error "Cannot copy between graphs of different types."
 -- error will be thrown.
 (>->) :: Graph a -> Graph a -> Graph a
 (>->) = copyGraph
+
+-- | Adjust the graph keyed by the given key
+-- to a function of its old value.
+adjustGraph :: (Graph a -> Graph a) -> String
+    -> Graph a -> Graph a
+adjustGraph = adjustHierarchy
+
+-- | Adjust the graph keyed by the given path
+-- to a function of its old value.
+adjustSubgraph :: (Graph a -> Graph a) -> [String]
+    -> Graph a -> Graph a
+adjustSubgraph = adjustSubhierarchy

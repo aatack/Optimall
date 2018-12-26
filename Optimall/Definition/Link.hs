@@ -1,5 +1,5 @@
 module Optimall.Definition.Link
-( Link
+( Link (..)
 , (-->)
 , (/->)
 , (-/>)

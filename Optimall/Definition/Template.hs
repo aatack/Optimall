@@ -1,4 +1,4 @@
-module Optimall.Definition.Internal
+module Optimall.Definition.Template
 ( Graph
 , Template (..)
 , Schema

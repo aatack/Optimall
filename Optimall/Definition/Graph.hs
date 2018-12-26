@@ -7,7 +7,7 @@ module Optimall.Definition.Graph
 
 import Optimall.Definition.Hierarchy
 import Optimall.Definition.Node
-import Optimall.Definition.Internal
+import Optimall.Definition.Template
 
 -- | Create a data structure describing the
 -- layout of the graph, including the template

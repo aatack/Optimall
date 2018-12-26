@@ -3,7 +3,7 @@ module Optimall.Definition.Node
 , NodeType (..)
 , (<-<)
 , (<?<)
-, (<<)
+, copyNode
 ) where
 
 -- | Defines a Node, containing a value as well as some
@@ -30,5 +30,5 @@ data NodeType = Input | Output | Parameter Int | Custom String
 -- | Copy the value of one node to another node, without
 -- checking that the shapes match.  If the source node has
 -- no value, any value the target node has will be overwritten.
-(<<) :: Node a -> Node a -> Node a
-(<<) (Node _ _ source) target = target <?< source
+copyNode :: Node a -> Node a -> Node a
+copyNode (Node _ _ source) target = target <?< source

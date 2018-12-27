@@ -4,50 +4,46 @@ module Optimall.Definition.Link
 , (/->)
 , (-/>)
 , (//>)
-, resolveSource
 , applyLink
 , reverseLink
 ) where
 
+import Optimall.Definition.Pointer
 import Optimall.Definition.Graph
 
 -- | Defines a link between two subgraphs.
-data Link = Link [String] [String]
+data Link a = Link (GraphPointer a) (GraphPointer a)
 
 -- | Specify a link between two top-level subgraphs.
-(-->) :: String -> String -> Link
-(-->) source target = Link [source] [target]
+(-->) :: String -> String -> Link a
+(-->) source target = Link (keyPointer source) (keyPointer target)
 
 -- | Specify a link between a nested subgraph and
 -- a top-level subgraph.
-(/->) :: [String] -> String -> Link
-(/->) source target = Link source [target]
+(/->) :: [String] -> String -> Link a
+(/->) source target = Link (keyPointers source) (keyPointer target)
 
 -- | Specify a link between a top-level subgraph and a
 -- nested subgraph.
-(-/>) :: String -> [String] -> Link
-(-/>) source target = Link [source] target
+(-/>) :: String -> [String] -> Link a
+(-/>) source target = Link (keyPointer source) (keyPointers target)
 
 -- | Specify a link between two nested subgraphs.
-(//>) :: [String] -> [String] -> Link
-(//>) = Link
+(//>) :: [String] -> [String] -> Link a
+(//>) source target = Link (keyPointers source) (keyPointers target)
 
--- | Get the subgraph pointed to by the link's source.
-resolveSource :: Graph a -> Link -> Graph a
-resolveSource g (Link s _) = g /../ s
+-- | Create a pointer by composing key pointers
+-- for each part of the path.
+keyPointers :: [String] -> GraphPointer a
+keyPointers path = stackPointers . map (keyPointer) $ path
 
 -- | Apply a link to a graph.
-applyLink :: Graph a -> Link -> Graph a
+applyLink :: Graph a -> Link a -> Graph a
 applyLink g l@(Link source target) = 
-    applyLink' (resolveSource g l) target g
-
--- | Given a source of a link and the target path of the link,
--- apply the link to the graph.
-applyLink' :: Graph a -> [String] -> Graph a -> Graph a
-applyLink' source path = 
-    let replace _ = source
-    in adjustSubgraph (replace) path
+    case resolve source g of
+        Just g' -> update target (g' >->) g
+        Nothing -> g
 
 -- | Flip the direction of a link.
-reverseLink :: Link -> Link
-reverseLink (Link a b) = Link b a
+reverseLink :: Link a -> Link a
+reverseLink (Link s t) = Link t s

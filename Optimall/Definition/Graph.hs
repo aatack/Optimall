@@ -2,7 +2,7 @@ module Optimall.Definition.Graph
 ( Graph
 , GraphPointer
 , layout
-, applyPointer
+, applyGraph
 , copyGraph
 , (>->)
 ) where
@@ -24,8 +24,8 @@ layout :: Graph a -> Schema
 layout = hmap (nodeType) (name)
 
 -- | Apply the subgraph specified by the given pointer.
-applyPointer :: GraphPointer a -> Graph a -> Graph a
-applyPointer (Pointer _ update) g = update f g
+applyGraph :: GraphPointer a -> Graph a -> Graph a
+applyGraph (Pointer _ update) g = update f g
     where
         f g' = apply (metadata g') g'
 

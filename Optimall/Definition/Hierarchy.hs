@@ -62,6 +62,12 @@ adjustSubhierarchy f (k:ks) h =
     let f' = adjustSubhierarchy f ks
     in adjustHierarchy f' k h 
 
+-- | Extract the hierarchy's metadata at the top level.
+metadata :: Hierarchy a b -> b
+metadata (Unit _ md) = md
+metadata (Keyed _ md) = md
+metadata (Ordered _ md) = md
+
 -- | Create a unit hierarcy from a tuple.
 unitHierarchy :: (a, b) -> Hierarchy a b
 unitHierarchy (unit, md) = Unit unit md
@@ -73,9 +79,3 @@ keyedHierarchy kvps md = Keyed (Map.fromList kvps) md
 -- | Create an ordered hierarchy from a list of hierarchies.
 orderedHierarchy :: [Hierarchy a b] -> b -> Hierarchy a b
 orderedHierarchy ls md = Ordered ls md
-
--- | Extract the hierarchy's metadata at the top level.
-metadata :: Hierarchy a b -> b
-metadata (Unit _ md) = md
-metadata (Keyed _ md) = md
-metadata (Ordered _ md) = md

@@ -2,7 +2,6 @@ module Optimall.Definition.Build
 ( linkedTemplate
 ) where
 
-import qualified Data.List as List
 import qualified Data.Map as Map
 import Optimall.Definition.Hierarchy
 import Optimall.Definition.Node

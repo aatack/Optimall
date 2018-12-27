@@ -52,8 +52,8 @@ copyGraph (Ordered source _) (Ordered target t) =
 copyGraph _ g = g
 
 -- | Copy the node values from one graph to another, but
--- keep the structure and node values the same.  If all the
--- nodes in the target are not present in the source, an
--- error will be thrown.
+-- keep the structure and node values the same.  Any
+-- subgraphs present in the target are not present in
+-- the source, they will be returned unaltered.
 (>->) :: Graph a -> Graph a -> Graph a
 (>->) = copyGraph

@@ -1,5 +1,6 @@
 module Optimall.Definition.Graph
 ( Graph
+, GraphPointer
 , layout
 , applyPointer
 , copyGraph
@@ -29,9 +30,10 @@ applyPointer (Pointer _ update) g = update f g
         f g' = apply (metadata g') g'
 
 -- | Copy the node values from one graph to another, but
--- keep the structure and node values the same.  If all the
--- nodes in the target are not present in the source, an
--- error will be thrown.
+-- keep the structure and node values the same.  Any nodes
+-- present in the target but not in the source will be
+-- left as they are; the original graph will be returned
+-- in whole if the graph types are different.
 copyGraph :: Graph a -> Graph a -> Graph a
 copyGraph (Unit source _) (Unit target t) =
     Unit (copyNode source target) t
@@ -40,8 +42,14 @@ copyGraph (Keyed source _) (Keyed target t) =
     in Keyed (Map.mapWithKey f target) t
 copyGraph (Ordered source _) (Ordered target t) =
     let copyGraph' (source', target') = copyGraph source' target'
-    in Ordered (map (copyGraph') (zip source target)) t
-copyGraph _ _ = error "Cannot copy between graphs of different types."
+        n = length source
+        (paired, unpaired)
+            | length target <= n
+                        = (zip source target, [])
+            | otherwise = (zip source (take n target), drop n target)
+        result = map (copyGraph') paired ++ unpaired
+    in Ordered result t
+copyGraph _ g = g
 
 -- | Copy the node values from one graph to another, but
 -- keep the structure and node values the same.  If all the

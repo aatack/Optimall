@@ -4,6 +4,7 @@ module Optimall.Definition.Link
 , (/->)
 , (-/>)
 , (//>)
+, resolveLink
 , applyLink
 , reverseLink
 ) where
@@ -36,6 +37,13 @@ data Link a = Link (GraphPointer a) (GraphPointer a)
 -- for each part of the path.
 keyPointers :: [String] -> GraphPointer a
 keyPointers path = stackPointers . map (keyPointer) $ path
+
+-- | Index the link's source and target for a
+-- specific graph.
+resolveLink :: Link a -> Graph a
+    -> (Maybe (Graph a), Maybe (Graph a))
+resolveLink (Link source target) graph =
+    (resolve source graph, resolve target graph)
 
 -- | Apply a link to a graph.
 applyLink :: Graph a -> Link a -> Graph a

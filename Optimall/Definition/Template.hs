@@ -2,8 +2,6 @@ module Optimall.Definition.Template
 ( Graph
 , Template (..)
 , Schema
-, TemplateCheck
-, ShapeCheck
 ) where
 
 import Optimall.Definition.Hierarchy
@@ -16,8 +14,7 @@ type Graph a = Hierarchy (Node a) (Template a)
 -- | Describes how the values in a graph interact with each other.
 data Template a = Template { name :: String
                            , schema :: Schema
-                           , templateCheck :: TemplateCheck a
-                           , shapeCheck :: ShapeCheck a
+                           , check :: Graph a -> [String]
                            , apply :: Graph a -> Graph a
                            , derivatives :: String -> Template a
                            }
@@ -25,15 +22,3 @@ data Template a = Template { name :: String
 -- | Describes the layout of a graph or expected
 -- layout of a template.
 type Schema = Hierarchy NodeType String
-
--- | Returns any errors found with the types in a graph.
-type TemplateCheck a = Hierarchy () (Template a) -> [String]
-
--- | Returns any errors found with the shapes of tensors
--- in a graph.
-type ShapeCheck a = Hierarchy [Int] (Template a) -> [String]
-
--- | Template equality is compared according to
--- their names.
-instance Eq (Template a) where
-    (==) a b = name a == name b

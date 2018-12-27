@@ -1,20 +1,19 @@
 module Optimall.Definition.Graph
 ( Graph
 , layout
-, templateLayout
-, shapeLayout
+, applyPointer
 , copyGraph
 , (>->)
-, (//)
-, (/../)
-, adjustGraph
-, adjustSubgraph
 ) where
 
 import qualified Data.Map as Map
 import Optimall.Definition.Hierarchy
+import Optimall.Definition.Pointer
 import Optimall.Definition.Node
 import Optimall.Definition.Template
+
+-- | Redefine the Pointer type for simplicity.
+type GraphPointer a = Pointer (Node a) (Template a)
 
 -- | Create a data structure describing the
 -- layout of the graph, including the template
@@ -23,28 +22,11 @@ import Optimall.Definition.Template
 layout :: Graph a -> Schema
 layout = hmap (nodeType) (name)
 
--- | Create a data structure describing the templates which
--- make up the graph.
-templateLayout :: Graph a -> Hierarchy () (Template a)
-templateLayout =
-    let nullify _ = ()
-    in hmap (nullify) (id)
-
--- | Create a data structure describing the shapes and
--- templates which make up the graph.
-shapeLayout :: Graph a -> Hierarchy [Int] (Template a)
-shapeLayout = hmap (shape) (id)
-
--- | Apply the values contained within a graph according to
--- its template.
-applyGraph :: Graph a -> Graph a
-applyGraph g = apply (metadata g) g
-
--- | Update the graph by applying the template to the
--- subgraph specified by the path.
-applySubgraph :: [String] -> Graph a -> Graph a
-applySubgraph [] g = applyGraph g
-applySubgraph (p:ps) g = applySubgraph ps (g // p)
+-- | Apply the subgraph specified by the given pointer.
+applyPointer :: GraphPointer a -> Graph a -> Graph a
+applyPointer (Pointer _ update) g = update f g
+    where
+        f g' = apply (metadata g') g'
 
 -- | Copy the node values from one graph to another, but
 -- keep the structure and node values the same.  If all the
@@ -67,15 +49,3 @@ copyGraph _ _ = error "Cannot copy between graphs of different types."
 -- error will be thrown.
 (>->) :: Graph a -> Graph a -> Graph a
 (>->) = copyGraph
-
--- | Adjust the graph keyed by the given key
--- to a function of its old value.
-adjustGraph :: (Graph a -> Graph a) -> String
-    -> Graph a -> Graph a
-adjustGraph = adjustHierarchy
-
--- | Adjust the graph keyed by the given path
--- to a function of its old value.
-adjustSubgraph :: (Graph a -> Graph a) -> [String]
-    -> Graph a -> Graph a
-adjustSubgraph = adjustSubhierarchy

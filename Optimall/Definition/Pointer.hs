@@ -62,7 +62,10 @@ indexPointer i = Pointer r u
             | length l > i = Just $ l !! i
             | otherwise    = Nothing
         r _ = Nothing
-        u f (Ordered l md) =
-            let l' = (take i l ++ [f $ l !! i] ++ drop (i + 1) l)
-            in Ordered l' md
+        u f h@(Ordered l md)
+            | length l > i =
+                let l' = (take i l ++ i' ++ drop (i + 1) l)
+                    i' = [f $ l !! i]
+                in Ordered l' md
+            | otherwise    = h
         u _ h = h

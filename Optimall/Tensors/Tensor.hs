@@ -99,8 +99,9 @@ class Tensor t where
     -- | Wrap a list of values in a rank-one tensor.
     wrapList :: [a] -> t a
 
-    -- | Repeat a value n times to form a rank-one tensor.
-    repeat :: Int -> a -> t a
+    -- | Replicate a value n times to form a rank-one tensor.
+    tensorReplicate :: Int -> a -> t a
+    tensorReplicate n = stackList . (replicate n) . wrap
 
     -- | Wrap a vector of tensors into a tensor one rank higher.
     stackVector :: Vector.Vector (t a) -> t a
@@ -146,3 +147,8 @@ class Tensor t where
             makeStack before current (next:others) =
                 let indices = [0..current]
                 in stackList [makeStack (before ++ [i]) next others | i <- indices]
+
+    -- | Create a tensor of zeros with the specified shape.
+    zeros :: [Int] -> t Float
+    zeros (n:[]) = tensorReplicate n 0.0
+    zeros (n:ns) = stackList . (replicate n) $ zeros ns

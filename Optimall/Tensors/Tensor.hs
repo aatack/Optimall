@@ -29,8 +29,7 @@ class Tensor t where
     partialMap :: Int -> (t a -> t b) -> t a -> t b
 
     -- | Map every element of the tensor according to a transfer function.
-    tensorMap :: (t a -> t b) -> t a -> t b
-    tensorMap = partialMap 0
+    tensorMap :: (a -> b) -> t a -> t b
 
     -- | Zip the last n dimensions of two tensors.
     partialZip :: Int -> t a -> t b -> t (a, b)
@@ -116,9 +115,31 @@ class Tensor t where
     -- | Create a tensor which spans a one-dimensional space with the
     -- given number of steps, evenly spaced.
     linearOneDimensional :: (Float, Float) -> Int -> t Float
-    linearOneDimensional (lower, upper) steps = wrapList . resize . toFloat $ indices
+    linearOneDimensional bounds steps = 
+        linearMultiDimensional [(bounds, steps)]
+
+    -- | Given the lower bound, upper bound, and spacing between points
+    -- for n dimensions, create a tensor of rank n + 1 where the elements
+    -- each describe a point in the described n-dimensional space.
+    linearMultiDimensional :: [((Float, Float), Int)] -> t Float
+    linearMultiDimensional dimensions =
+        let mappers = wrapList [\i -> l + (u - l) / (fromIntegral ns) * (fromIntegral i) |
+                ((l, u), ns) <- dimensions]
+            apply (f, x) = f x
+            mapIndex = (tensorMap (apply)) . (tensorZip mappers)
+        in partialMap 1 mapIndex $ indicesTensor shape
+            where 
+                shape = [d | (_, d) <- dimensions]
+
+    -- | Given a list of n integers, create a tensor of rank n + 1 such that
+    -- each element's value is its own coordinate.
+    indicesTensor :: [Int] -> t Int
+    indicesTensor (firstDimension : dimensions) = makeStack [] firstDimension dimensions
         where
-            indices = [0 .. steps - 1]
-            toFloat = map (fromIntegral)
-            resize = map (* stepSize)
-            stepSize = (upper - lower) / (fromIntegral steps)
+            makeStack before current [] =
+                let indices = [0..current]
+                    wrapIndex i = wrapList $ before ++ [i]
+                in stackList [wrapIndex i | i <- indices]
+            makeStack before current (next:others) =
+                let indices = [0..current]
+                in stackList [makeStack (before ++ [i]) next others | i <- indices]

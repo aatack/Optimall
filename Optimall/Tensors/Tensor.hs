@@ -74,10 +74,14 @@ class Tensor t where
     -- | Take slices of each dimension given the lower (inclusive) and
     -- upper (exclusive) bounds.
     slices :: t a -> [(Int, Int)] -> t a
+    slices tensor (bounds:[]) = slice tensor bounds
+    slices tensor ((lower, upper):others) = 
+        let range = [lower..upper]
+        in stackList [slices (index tensor [i]) others | i <- range]
 
     -- | Take a slice from the first dimension of the tensor.
     slice :: t a -> (Int, Int) -> t a
-    slice tensor bounds = slices tensor [bounds]
+    slice tensor (lower, upper) = stackList [index tensor [i] | i <- [lower..upper]]
 
     {- Updating -}
 

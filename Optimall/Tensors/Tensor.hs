@@ -30,6 +30,8 @@ class Tensor t where
 
     -- | Map every element of the tensor according to a transfer function.
     tensorMap :: (a -> b) -> t a -> t b
+    tensorMap f = partialMap 0 (f')
+        where f' = wrap . f . unsafeExtract
 
     -- | Zip the last n dimensions of two tensors.
     partialZip :: Int -> t a -> t b -> t (a, b)
@@ -123,10 +125,11 @@ class Tensor t where
     -- each describe a point in the described n-dimensional space.
     linearMultiDimensional :: [((Float, Float), Int)] -> t Float
     linearMultiDimensional dimensions =
-        let mappers = wrapList [\i -> l + (u - l) / (fromIntegral ns) * (fromIntegral i) |
-                ((l, u), ns) <- dimensions]
+        let mapIndex = (tensorMap (apply)) . (tensorZip mappers)
             apply (f, x) = f x
-            mapIndex = (tensorMap (apply)) . (tensorZip mappers)
+            mappers = wrapList [\i -> l + (u - l) / (float ns) * (float i) |
+                ((l, u), ns) <- dimensions]
+            float = fromIntegral
         in partialMap 1 mapIndex $ indicesTensor shape
             where 
                 shape = [d | (_, d) <- dimensions]

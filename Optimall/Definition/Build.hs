@@ -3,6 +3,7 @@ module Optimall.Definition.Build
 ) where
 
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Optimall.Definition.Hierarchy
 import Optimall.Definition.Node
 import Optimall.Definition.Template
@@ -82,3 +83,7 @@ buildApply = error "NYI."
 
 -- | Build a derivatives template for a linked template.
 buildDerivatives = error "NYI."
+
+-- | Defines a set of graph elements whose order of
+-- evaluation is immaterial.
+type DependencyTier a = Set.Set (Either (Graph a) (Link a))

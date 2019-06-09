@@ -95,9 +95,11 @@ class Tensor t where
 
     -- | Wrap a vector of values in a rank-one tensor.
     wrapVector :: Vector.Vector a -> t a
+    wrapVector = stackVector . (Vector.map (wrap))
 
     -- | Wrap a list of values in a rank-one tensor.
     wrapList :: [a] -> t a
+    wrapList = stackList . (map (wrap))
 
     -- | Replicate a value n times to form a rank-one tensor.
     tensorReplicate :: Int -> a -> t a
@@ -108,6 +110,7 @@ class Tensor t where
 
     -- | Wrap a list of tensors into a tensor one rank higher.
     stackList :: [t a] -> t a
+    stackList = stackVector . Vector.fromList
 
     {- Mathematical Operations -}
 

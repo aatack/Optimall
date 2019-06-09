@@ -24,25 +24,36 @@ class Tensor t where
     rank = length . shape
 
     {- Tensor Transformations -}
-
-    -- | Map every element of the tensor according to a transfer function.
-    tensorMap :: (a -> b) -> t a -> t b
-
-    -- | Zip the elements of two tensors together.
-    tensorZip :: t a -> t b -> t (a, b)
-
+    
     -- | Map over the last n dimensions of the tensor.
     partialMap :: Int -> (t a -> t b) -> t a -> t b
+
+    -- | Map every element of the tensor according to a transfer function.
+    tensorMap :: (t a -> t b) -> t a -> t b
+    tensorMap = partialMap 0
 
     -- | Zip the last n dimensions of two tensors.
     partialZip :: Int -> t a -> t b -> t (a, b)
 
-    -- | Flatten the tensor into a single vector.
-    flatten :: t a -> Vector.Vector a
+    -- | Zip the elements of two tensors together.
+    tensorZip :: t a -> t b -> t (a, b)
+    tensorZip = partialZip 0
 
     -- | Flatten a tensor from the -nth dimension onwards.
     partialFlatten :: Int -> t a -> t a
-    partialFlatten n = partialMap n (wrapVector . flatten) 
+    partialFlatten n = partialMap n (flatten)
+
+    -- | Flatten the tensor into a rank-one tensor.
+    flatten :: t a -> t a
+    flatten = partialFlatten 0
+
+    -- | Reduce a tensor dimension by dimension to a rank-zero tensor
+    -- by applying the same function multiple times.
+    tensorReduce :: (t a -> t a) -> t a -> t a
+    tensorReduce f tensor
+        | rank tensor == 1 = f tensor
+        | rank tensor == 0 = tensor
+        | otherwise        = tensorReduce f $ partialMap 1 f tensor
 
     {- Indexing -}
 
@@ -90,6 +101,24 @@ class Tensor t where
     -- | Repeat a value n times to form a rank-one tensor.
     repeat :: Int -> a -> t a
 
+    -- | Wrap a vector of tensors into a tensor one rank higher.
+    stackVector :: Vector.Vector (t a) -> t a
+
+    -- | Wrap a list of tensors into a tensor one rank higher.
+    stackList :: [t a] -> t a
+
     {- Mathematical Operations -}
 
     {- Dimension Rearrangement -}
+
+    {- Common Tensors -}
+
+    -- | Create a tensor which spans a one-dimensional space with the
+    -- given number of steps, evenly spaced.
+    linearOneDimensional :: (Float, Float) -> Int -> t Float
+    linearOneDimensional (lower, upper) steps = wrapList . resize . toFloat $ indices
+        where
+            indices = [0 .. steps - 1]
+            toFloat = map (fromIntegral)
+            resize = map (* stepSize)
+            stepSize = (upper - lower) / (fromIntegral steps)

@@ -32,13 +32,17 @@ class Tensor t where
     tensorZip :: t a -> t b -> t (a, b)
 
     -- | Map over the last n dimensions of the tensor.
-    incompleteMap :: Int -> (a -> b) -> t a -> t b
+    partialMap :: Int -> (t a -> t b) -> t a -> t b
 
     -- | Zip the last n dimensions of two tensors.
-    incompleteZip :: Int -> t a -> t b -> t (a, b)
+    partialZip :: Int -> t a -> t b -> t (a, b)
 
     -- | Flatten the tensor into a single vector.
     flatten :: t a -> Vector.Vector a
+
+    -- | Flatten a tensor from the -nth dimension onwards.
+    partialFlatten :: Int -> t a -> t a
+    partialFlatten n = partialMap n (wrapVector . flatten) 
 
     {- Indexing -}
 
@@ -55,7 +59,36 @@ class Tensor t where
         Just x  -> x
         Nothing -> error "Tried to extract value from a non-zero rank Tensor"
 
+    -- | Take slices of each dimension given the lower (inclusive) and
+    -- upper (exclusive) bounds.
+    slices :: t a -> [(Int, Int)] -> t a
+
+    -- | Take a slice from the first dimension of the tensor.
+    slice :: t a -> (Int, Int) -> t a
+    slice tensor bounds = slices tensor [bounds]
+
     {- Updating -}
+
+    -- | Update the value at the given index.
+    update :: t a -> [Int] -> t a -> t a
+
+    -- | Update the value at the root index given.
+    updateRoot :: t a -> [Int] -> a -> t a
+    updateRoot tensor i x = update tensor i (wrap x)
+
+    {- Construction -}
+
+    -- | Wrap a singular value in a tensor.
+    wrap :: a -> t a
+
+    -- | Wrap a vector of values in a rank-one tensor.
+    wrapVector :: Vector.Vector a -> t a
+
+    -- | Wrap a list of values in a rank-one tensor.
+    wrapList :: [a] -> t a
+
+    -- | Repeat a value n times to form a rank-one tensor.
+    repeat :: Int -> a -> t a
 
     {- Mathematical Operations -}
 
